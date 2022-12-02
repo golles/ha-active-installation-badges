@@ -1,0 +1,44 @@
+name: Update badges
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * *"
+
+jobs:
+  update-badges:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Make temp working directory
+        run: |
+          mkdir -p .tmp
+
+      - name: Download badges for integrations
+        run: |
+          integrations=(
+            kamstrup_403 
+            knmi
+          )
+
+          curl -s https://analytics.home-assistant.io/custom_integrations.json --output .tmp/custom_integrations.json
+
+          for integration in "${integrations[@]}"
+          do
+            TOTAL=$(jq --arg integration "${integration}" '.[$integration].total' .tmp/custom_integrations.json)
+            echo "Integration ${integration} has ${TOTAL} installations"
+            curl -s "https://img.shields.io/badge/Active_installations-${TOTAL}-orange?style=for-the-badge" --output "${integration}.svg"
+          done
+
+      - name: Remove temp working directory
+        run: |
+          rm -rf .tmp
+
+      - name: Commit & Push changes
+        uses: actions-js/push@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          message: 'chore: update badges ${date}'
