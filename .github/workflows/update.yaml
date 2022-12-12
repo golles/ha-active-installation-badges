@@ -17,20 +17,23 @@ jobs:
         run: |
           mkdir -p .tmp
 
+      - name: Download custom integration analytics file
+        run: |
+          curl -s https://analytics.home-assistant.io/custom_integrations.json --output .tmp/custom_integrations.json
+
       - name: Download badges for integrations
         run: |
           integrations=(
             kamstrup_403 
             knmi
+            mc66c
           )
-
-          curl -s https://analytics.home-assistant.io/custom_integrations.json --output .tmp/custom_integrations.json
 
           for integration in "${integrations[@]}"
           do
-            TOTAL=$(jq --arg integration "${integration}" '.[$integration].total' .tmp/custom_integrations.json)
-            echo "Integration ${integration} has ${TOTAL} installations"
-            curl -s "https://img.shields.io/badge/Active_installations-${TOTAL}-orange?style=for-the-badge" --output "${integration}.svg"
+            installations=$(jq --arg integration "${integration}" '.[$integration].total' .tmp/custom_integrations.json)
+            echo "Integration ${integration} has ${installations} installations"
+            curl -s "https://img.shields.io/badge/Active_installations-${installations}-orange?style=for-the-badge" --output "${integration}.svg"
           done
 
       - name: Remove temp working directory
