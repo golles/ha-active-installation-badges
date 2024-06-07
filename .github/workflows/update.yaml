@@ -12,38 +12,19 @@ jobs:
   update-badges:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Make temp working directory
+      - name: Update badges
         run: |
-          mkdir -p .tmp
+          ./src/update_badges.sh
 
-      - name: Download custom integration analytics file
+      - name: Commit updated badges
         run: |
-          curl -s https://analytics.home-assistant.io/custom_integrations.json --output .tmp/custom_integrations.json
-
-      - name: Download badges for integrations
-        run: |
-          integrations=(
-            kamstrup_403 
-            knmi
-            mc66c
-          )
-
-          for integration in "${integrations[@]}"
-          do
-            installations=$(jq --arg integration "${integration}" '.[$integration].total' .tmp/custom_integrations.json)
-            echo "Integration ${integration} has ${installations} installations"
-            curl -s "https://img.shields.io/badge/Active_installations-${installations}-orange?style=for-the-badge" --output "${integration}.svg"
-          done
-
-      - name: Remove temp working directory
-        run: |
-          rm -rf .tmp
-
-      - name: Commit & Push changes
-        uses: actions-js/push@master
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+          if [[ -n $(git diff badges/) ]]; then
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add badges/
+              git commit -m "chore: badges update $(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+              git push origin main
+          fi
