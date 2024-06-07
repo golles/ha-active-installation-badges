@@ -4,6 +4,7 @@
 temp_dir=".tmp"
 badges_dir="badges"
 data_file="${temp_dir}/custom_integrations.json"
+default_template_url_file="templates/_default.url"
 
 # Ensure necessary commands are available
 required_commands=("curl" "jq")
@@ -36,37 +37,37 @@ if ! jq empty "${data_file}" 2>/dev/null; then
     exit 1
 fi
 
-# Get the list of integrations
-integrations=$(jq -r 'keys[]' "${data_file}")
-
-# Read default badge template
-if ! default_badge_content=$(<templates/_default.svg); then
-    echo "Failed to read default badge template. Aborting."
+# Read default template URL
+if ! default_template_url=$(<"${default_template_url_file}"); then
+    echo "Failed to read default template URL. Aborting."
     exit 1
 fi
+
+# Get the list of integrations
+integrations=$(jq -r 'keys[]' "${data_file}")
 
 # Iterate over each integration and create a badge
 for integration in ${integrations}; do
     installations=$(jq --arg integration "${integration}" '.[$integration].total' "${data_file}")
     echo "Integration ${integration} has ${installations} installations"
 
-    # Check for an integration-specific template
-    integration_template="templates/${integration}.svg"
-    if [ -f "${integration_template}" ]; then
-        echo "Using custom template for ${integration}"
-        if ! badge_content=$(<"${integration_template}"); then
-            echo "Failed to read custom template for ${integration}. Using default template."
-            badge_content="${default_badge_content}"
-        fi
+    # Check for an integration-specific URL file
+    integration_url_file="templates/${integration}.url"
+    if [ -f "${integration_url_file}" ]; then
+        echo "Using custom template URL for ${integration}"
+        template_url=$(<"${integration_url_file}")
     else
-        badge_content="${default_badge_content}"
+        template_url="${default_template_url}"
     fi
 
     # Replace placeholder with the actual number of installations
-    badge_content="${badge_content//XXXXX/$installations}"
+    template_url="${template_url//XXXXX/$installations}"
 
-    # Write the badge content to the file
-    if ! echo -n "$badge_content" > "${badges_dir}/${integration}.svg"; then
+    # Download the badge for the integration
+    if ! curl -s "${template_url}" --output "${badges_dir}/${integration}.svg"; then
         echo "Failed to write badge for ${integration}. Continuing."
+        continue
     fi
 done
+
+echo "Badge creation process completed."

@@ -10,8 +10,7 @@ This repository hosts active installation badges for all Home Assistant custom c
 
 ## Templates
 
-If you like to have a custom template for your integration, please open a pull request with the new template.
-The default template was taken from <https://img.shields.io/badge/Active_installations-XXXXX-orange?style=for-the-badge>
+If you like to customize the badge for your integration, you can add a shield url for your integration in the templates directory. Each template file should end with `.url` and should contain `XXXXX` on the installations position.
 
 ## Credits
 

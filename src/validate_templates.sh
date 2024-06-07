@@ -4,8 +4,8 @@
 directory="templates"
 search_string="XXXXX"
 
-# Loop through each .svg file in the directory
-for file in "$directory"/*.svg; do
+# Loop through each .url file in the directory
+for file in "$directory"/*.url; do
   # Check if the file contains the search string
   if ! grep -q "$search_string" "$file"; then
     # Output the filename to the console and exit
@@ -15,4 +15,4 @@ for file in "$directory"/*.svg; do
 done
 
 # If all files contain the string, print a success message
-echo "All .svg files contain the string '$search_string'."
+echo "All .url files contain the string '$search_string'."
